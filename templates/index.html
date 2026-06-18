@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="app-layout">
+    <!-- Sidebar Overlay (Mobil için) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    {% include "partials/sidebar.html" %}
+
+    <!-- Sağ Taraftaki Ana Alan (Header + Chat) -->
+    <div class="main-panel">
+        {% include "partials/header.html" %}
+
+        <div class="main-chat-area">
+            <main>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% if uyari %}
+                    <div class="warning">{{ uyari }}</div>
+                {% endif %}
+
+                {% include "partials/chat_display.html" %}
+                {% include "partials/chat_input.html" %}
+            </main>
+        </div>
+    </div>
+</div>
+{% include "partials/modals.html" %}
+{% endblock %}
+
+{% block scripts %}
+{% include "partials/scripts.html" %}
+{% endblock %}

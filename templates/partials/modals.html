@@ -1,0 +1,31 @@
+<!-- Rename Modal -->
+<div id="renameModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeRenameModal()">&times;</span>
+        <h3>Sohbeti Yeniden Adlandır</h3>
+        <form id="renameForm" method="post">
+            <input type="hidden" id="renameChatId" name="chat_id">
+            <input type="text" id="newChatTitle" name="yeni_baslik" placeholder="Yeni sohbet adı" required>
+            <div class="modal-buttons">
+                <button type="button" onclick="closeRenameModal()">İptal</button>
+                <button type="submit">Güncelle</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteConfirmModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeDeleteConfirmModal()">&times;</span>
+        <h3>Sohbeti Sil</h3>
+        <p>Bu sohbeti ve tüm mesaj geçmişini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+        <form id="deleteForm" method="post">
+            <input type="hidden" id="deleteChatIdConfirm" name="chat_id">
+            <div class="modal-buttons">
+                <button type="button" onclick="closeDeleteConfirmModal()">İptal</button>
+                <button type="submit" class="delete-btn-modal">Evet, Sil</button>
+            </div>
+        </form>
+    </div>
+</div>

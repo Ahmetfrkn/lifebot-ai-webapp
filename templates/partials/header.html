@@ -1,0 +1,20 @@
+<header class="main-header">
+    <div class="header-left">
+        <button type="button" class="sidebar-toggle-btn" id="sidebarToggle" title="Menüyü Aç/Kapat">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="header-logo">
+            <i class="fa-solid fa-robot"></i>
+            <h1>LifeBot AF.AI</h1>
+        </div>
+    </div>
+    <div class="header-user-info">
+        <div class="user-profile">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>{{ current_user.username }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+            <i class="fa-solid fa-right-from-bracket"></i> Çıkış
+        </a>
+    </div>
+</header>

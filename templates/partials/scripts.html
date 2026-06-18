@@ -1,0 +1,203 @@
+<script>
+    function scrollToBottom(smooth) {
+        var anchor = document.getElementById("chat-bottom-anchor");
+        if (anchor) {
+            anchor.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+        }
+    }
+
+    // Modal Fonksiyonları
+    function openRenameModal(chatId, currentTitle) {
+        $('#renameChatId').val(chatId);
+        $('#newChatTitle').val(currentTitle);
+        $('#renameForm').attr('action', '/rename_chat/' + chatId);
+        $('#renameModal').addClass('show');
+        $('#newChatTitle').focus();
+    }
+
+    function closeRenameModal() {
+        $('#renameModal').removeClass('show');
+    }
+
+    function openDeleteConfirmModal(chatId) {
+        $('#deleteChatIdConfirm').val(chatId);
+        $('#deleteForm').attr('action', '/delete_chat/' + chatId);
+        $('#deleteConfirmModal').addClass('show');
+    }
+
+    function closeDeleteConfirmModal() {
+        $('#deleteConfirmModal').removeClass('show');
+    }
+
+    $(document).ready(function() {
+        var chatInput = $('textarea[name="metin"]');
+        var sendBtn = $('.send-message-btn');
+        var sidebar = $('.sidebar');
+        var overlay = $('#sidebarOverlay');
+        var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+        // ─── Sidebar Aç / Kapat ───────────────────────────
+        function updateMobileFlag() {
+            isMobile = window.matchMedia('(max-width: 768px)').matches;
+        }
+        $(window).on('resize', updateMobileFlag);
+
+        $('#sidebarToggle').on('click', function() {
+            updateMobileFlag();
+            if (isMobile) {
+                sidebar.toggleClass('mobile-open');
+                overlay.toggleClass('active');
+            } else {
+                sidebar.toggleClass('collapsed');
+            }
+        });
+
+        overlay.on('click', function() {
+            sidebar.removeClass('mobile-open');
+            overlay.removeClass('active');
+        });
+
+        // ─── Sayfa yüklendiğinde sohbeti en alta anında kaydır ─────
+        scrollToBottom(false);
+
+        // ─── Modal dışına tıklandığında kapatma ─────
+        $(window).on('click', function(e) {
+            if ($(e.target).hasClass('modal')) {
+                $('.modal').removeClass('show');
+            }
+        });
+
+        // ─── Metin kutusunun otomatik büyümesi ve buton aktiflik yönetimi
+        chatInput.on('input', function() {
+            this.style.height = 'auto';
+            var newHeight = Math.min(this.scrollHeight, 200);
+            this.style.height = newHeight + 'px';
+            var hasVal = $(this).val().trim().length > 0;
+            sendBtn.prop('disabled', !hasVal);
+        });
+
+        // ─── Enter gönder, Shift+Enter satır atla ─────
+        chatInput.on('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendBtn.prop('disabled')) {
+                    $('#chatForm').submit();
+                }
+            }
+        });
+
+        // ─── AJAX Chat Gönderimi ──────────────────────────
+        $('#chatForm').on('submit', function(e) {
+            e.preventDefault();
+
+            var mesaj = chatInput.val().trim();
+            var sohbetId = $(this).data('sohbet-id');
+            if (mesaj === "") return;
+            if (!sohbetId) {
+                alert("Lütfen önce aktif bir sohbet seçin veya yeni bir sohbet oluşturun.");
+                return;
+            }
+
+            sendBtn.prop('disabled', true);
+
+            // Kullanıcı mesajını ekle
+            var zamanStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            var userBubble = `
+                <div class="chat-bubble-container user-msg">
+                    <div class="chat-bubble user">
+                        ${escapeHtml(mesaj)}
+                        <span class="timestamp">
+                            <i class="fa-regular fa-clock"></i> ${zamanStr}
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            $('.empty-chat-placeholder').remove();
+            $(userBubble).insertBefore('#chat-bottom-anchor');
+
+            chatInput.val('');
+            chatInput.css('height', '24px');
+            scrollToBottom(true);
+
+            // Yazıyor animasyonu
+            var yaziyorId = "yaziyor_" + Date.now();
+            var yaziyorBubble = `
+                <div class="chat-bubble-container bot-msg" id="${yaziyorId}">
+                    <div class="chat-bubble bot">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $(yaziyorBubble).insertBefore('#chat-bottom-anchor');
+            scrollToBottom(true);
+
+            // AJAX
+            $.ajax({
+                url: "/api/chat",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ mesaj: mesaj, sohbet_id: sohbetId }),
+                success: function(response) {
+                    $('#' + yaziyorId).remove();
+                    if (response.cevap) {
+                        var botZaman = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        var botBubble = `
+                            <div class="chat-bubble-container bot-msg">
+                                <div class="chat-bubble bot">
+                                    ${escapeHtml(response.cevap)}
+                                    <span class="timestamp">
+                                        <i class="fa-regular fa-clock"></i> ${botZaman}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                        $(botBubble).insertBefore('#chat-bottom-anchor');
+                        scrollToBottom(true);
+                    } else if (response.hata) {
+                        showErrorBubble(response.hata);
+                    }
+                },
+                error: function(xhr) {
+                    $('#' + yaziyorId).remove();
+                    var hataMesaji = "Sunucu bağlantı hatası oluştu.";
+                    if (xhr.responseJSON && xhr.responseJSON.hata) {
+                        hataMesaji = xhr.responseJSON.hata;
+                    }
+                    showErrorBubble(hataMesaji);
+                }
+            });
+        });
+
+        function showErrorBubble(hataMesaji) {
+            var botZaman = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            var errorBubble = `
+                <div class="chat-bubble-container bot-msg">
+                    <div class="chat-bubble bot" style="border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); padding: 12px 18px;">
+                        <span style="color: #fca5a5; font-size: 14px;"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(hataMesaji)}</span>
+                        <span class="timestamp">
+                            <i class="fa-regular fa-clock"></i> ${botZaman}
+                        </span>
+                    </div>
+                </div>
+            `;
+            $(errorBubble).insertBefore('#chat-bottom-anchor');
+            scrollToBottom(true);
+        }
+
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+    });
+</script>

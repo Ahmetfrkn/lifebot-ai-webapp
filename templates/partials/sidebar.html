@@ -1,0 +1,32 @@
+<aside class="sidebar">
+    <form action="{{ url_for('new_chat') }}" method="post">
+        <button type="submit" class="new-chat-btn">
+            <i class="fa-solid fa-plus"></i> Yeni Sohbet
+        </button>
+    </form>
+    
+    <div class="sidebar-title">Sohbetleriniz</div>
+    
+    <div class="chat-history-list">
+        {% for sohbet in sohbetler %}
+            <div class="chat-item {% if sohbet.id == secili_sohbet_id %}active{% endif %}" onclick="window.location.href='{{ url_for('index', chat_id=sohbet.id) }}'">
+                <div class="chat-item-left">
+                    <i class="fa-regular fa-message"></i>
+                    <span class="chat-item-title" title="{{ sohbet.baslik }}">{{ sohbet.baslik }}</span>
+                </div>
+                <div class="chat-item-actions">
+                    <button class="action-icon-btn edit" onclick="event.stopPropagation(); openRenameModal({{ sohbet.id }}, '{{ sohbet.baslik | replace("'", "\\'") }}')" title="Yeniden Adlandır">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="action-icon-btn delete" onclick="event.stopPropagation(); openDeleteConfirmModal({{ sohbet.id }})" title="Sil">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <div style="padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted);">
+                Sohbet bulunmuyor.
+            </div>
+        {% endfor %}
+    </div>
+</aside>
